@@ -1,5 +1,10 @@
-import obj from './const.js'
-console.log('obj',obj)
-export function add(a, b) {
-    return a + b
+import log from './log.js'
+
+let num = 0
+export function add(...arg) {
+    num += 1
+    log('add', num)
+    return arg.reduce((prev, curr) => {
+        return prev + curr
+    }, 0)
 }

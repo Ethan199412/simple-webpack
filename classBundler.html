@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script>
+        class BundleHandler {
+            constructor(graph) {
+                this.graph = graph
+                this.moduleList = []
+            }
+
+            bundle = () => {
+                this.require('./src/index.js')
+            }
+
+            require = (module) => {
+                this.moduleList.push(module)
+
+                let exports = {}
+                this.run(this.localRequire, exports, this.graph[module].code)
+
+                this.moduleList.pop()
+                return exports
+            }
+
+            localRequire = (relativePath) => {
+                let module = this.moduleList[this.moduleList.length-1]
+                // 把相对路径换成绝对路径
+                return this.require(this.graph[module].dependencies[relativePath])
+            }
+
+            run = (require, exports, code) => {
+                eval(code)
+            }
+        }
+
+        function run(require, exports, code) {
+            eval(code)
+        }
+
+        function bundle(graph) {
+            function require(module) {
+                // 相对路径换绝对路径
+                function localRequire(relativePath) {
+                    console.log('[p1] module', module, 'relativePath', relativePath, 'graph[module].dependencies[relativePath]', graph[module].dependencies[relativePath])
+                    return require(graph[module].dependencies[relativePath])
+                }
+                var exports = {};
+
+                run(localRequire, exports, graph[module].code);
+                return exports;
+            }
+            require('./src/index.js')
+        }
+        
+        let bh = new BundleHandler(
+            {
+                './src/index.js': {
+                    dependencies: { './const.js': './src/const.js', './utils.js': './src/utils.js' },
+                    code: '"use strict";\n' +
+                        '\n' +
+                        'var _const = _interopRequireDefault(require("./const.js"));\n' +
+                        '\n' +
+                        'var _utils = require("./utils.js");\n' +
+                        '\n' +
+                        'function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }\n' +
+                        '\n' +
+                        'console.log((0, _utils.add)(_const["default"].a, _const["default"].b));'
+                },
+                './src/const.js': {
+                    dependencies: {},
+                    code: '"use strict";\n' +
+                        '\n' +
+                        'Object.defineProperty(exports, "__esModule", {\n' +
+                        '  value: true\n' +
+                        '});\n' +
+                        'exports["default"] = void 0;\n' +
+                        'var _default = {\n' +
+                        '  a: 1,\n' +
+                        '  b: 2\n' +
+                        '};\n' +
+                        'exports["default"] = _default;'
+                },
+                './src/utils.js': {
+                    dependencies: { './const.js': './src/const.js' },
+                    code: '"use strict";\n' +
+                        '\n' +
+                        'Object.defineProperty(exports, "__esModule", {\n' +
+                        '  value: true\n' +
+                        '});\n' +
+                        'exports.add = add;\n' +
+                        '\n' +
+                        'var _const = _interopRequireDefault(require("./const.js"));\n' +
+                        '\n' +
+                        'function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }\n' +
+                        '\n' +
+                        `console.log('obj', _const["default"]);\n` +
+                        '\n' +
+                        'function add(a, b) {\n' +
+                        '  return a + b;\n' +
+                        '}'
+                }
+            }
+        )
+        bh.bundle()
+
+    </script>
+</body>
+
+</html>
