@@ -86,6 +86,7 @@ class Compiler {
     build(filename) {
         const { getAst, getdependencies, getCode } = Parser
         const ast = getAst(filename)
+        console.log('[p1.0] ast', ast)
         const dependencies = getdependencies(ast, filename)
         const code = getCode(ast)
         return {
